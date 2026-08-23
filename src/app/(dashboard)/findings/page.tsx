@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { patrolFindings, departments, locations } from "@/db/schema";
@@ -147,7 +148,14 @@ export default async function FindingsPage() {
               <TableBody>
                 {records.map((r) => (
                   <TableRow key={r.number}>
-                    <TableCell className="font-mono text-xs">{r.number}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      <Link
+                        href={`/findings/${encodeURIComponent(r.number)}`}
+                        className="text-blue-500 hover:underline font-bold"
+                      >
+                        {r.number}
+                      </Link>
+                    </TableCell>
                     <TableCell className="max-w-48 truncate">{r.title}</TableCell>
                     <TableCell>{r.location}</TableCell>
                     <TableCell>{r.category}</TableCell>

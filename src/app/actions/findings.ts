@@ -2,6 +2,8 @@
 
 import { db } from "@/db";
 import { patrolFindings } from "@/db/schema";
+import { notifyMultipleUsers } from "./notifications";
+import { getUserIdsByRoles } from "@/lib/notify-helpers";
 
 function generateId(): string {
   return Math.random().toString(36).substr(2, 9);
@@ -39,6 +41,16 @@ export async function createFinding(data: {
       progress: 0,
       initialAction: data.initialAction,
     });
+
+    const supervisorIds = await getUserIdsByRoles(["Security Supervisor", "Chief Security"]);
+    if (supervisorIds.length > 0) {
+      await notifyMultipleUsers({
+        userIds: supervisorIds,
+        title: `Temuan Baru (${data.priority}): ${data.title}`,
+        detail: `Dilaporkan oleh ${data.reporter} di ${data.location}. Kategori: ${data.category}`,
+        tone: data.priority === "Tinggi" || data.priority === "Kritis" ? "warning" : "info",
+      });
+    }
 
     return {
       success: true,

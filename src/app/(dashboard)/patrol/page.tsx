@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { db } from "@/db";
 import { patrolRecords, securityShifts, locations, googleSyncConfig } from "@/db/schema";
 import { desc, sql } from "drizzle-orm";
@@ -137,7 +138,14 @@ export default async function PatrolPage() {
               <TableBody>
                 {records.map((r) => (
                   <TableRow key={r.number}>
-                    <TableCell className="font-mono text-xs">{r.number}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      <Link
+                        href={`/patrol/${encodeURIComponent(r.number)}`}
+                        className="text-blue-500 hover:underline font-bold"
+                      >
+                        {r.number}
+                      </Link>
+                    </TableCell>
                     <TableCell>{r.patrolDate}</TableCell>
                     <TableCell>{r.officerName}</TableCell>
                     <TableCell>{r.shift}</TableCell>

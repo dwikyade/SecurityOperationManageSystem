@@ -34,6 +34,7 @@ import {
   createVendor,
   createGoodsCategory,
 } from "@/app/actions/master-data";
+import { createCheckpoint } from "@/app/actions/checkpoints";
 import { toast } from "sonner";
 
 export function MasterDataCreateDialog() {
@@ -59,6 +60,17 @@ export function MasterDataCreateDialog() {
           name: formData.get("locName") as string,
           floor: formData.get("locFloor") as string,
           areaType: formData.get("locAreaType") as string,
+        });
+      } else if (activeTab === "checkpoint") {
+        result = await createCheckpoint({
+          code: formData.get("cpCode") as string,
+          name: formData.get("cpName") as string,
+          locationCode: formData.get("cpLocation") as string,
+          floor: formData.get("cpFloor") as string,
+          description: formData.get("cpDesc") as string,
+          shift: formData.get("cpShift") as string,
+          patrolOrder: Number(formData.get("cpOrder")),
+          userName: "Admin",
         });
       } else if (activeTab === "vendor") {
         result = await createVendor({
@@ -104,9 +116,10 @@ export function MasterDataCreateDialog() {
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-4">
-            <TabsTrigger value="department">Departemen</TabsTrigger>
+          <TabsList className="grid grid-cols-5">
+            <TabsTrigger value="department">Dept</TabsTrigger>
             <TabsTrigger value="location">Lokasi</TabsTrigger>
+            <TabsTrigger value="checkpoint">CP</TabsTrigger>
             <TabsTrigger value="vendor">Vendor</TabsTrigger>
             <TabsTrigger value="category">Kategori</TabsTrigger>
           </TabsList>
@@ -156,6 +169,40 @@ export function MasterDataCreateDialog() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="checkpoint" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Kode Checkpoint (Max 20 chars)</Label>
+                <Input name="cpCode" placeholder="CP-LBY-01, CP-RF-01" required />
+              </div>
+              <div className="space-y-2">
+                <Label>Nama Checkpoint</Label>
+                <Input name="cpName" placeholder="Pintu Utama Lobby, Area Helipad" required />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Lantai</Label>
+                  <Input name="cpFloor" placeholder="GF, RF, B1" required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Shift</Label>
+                  <Select name="cpShift" required defaultValue="Pagi">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pagi">Pagi</SelectItem>
+                      <SelectItem value="Siang">Siang</SelectItem>
+                      <SelectItem value="Malam">Malam</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Urutan Patroli</Label>
+                <Input name="cpOrder" type="number" min="1" defaultValue="1" required />
               </div>
             </TabsContent>
 

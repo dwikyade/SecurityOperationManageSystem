@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { departments, locations, securityShifts, vendors, goodsCategories } from "@/db/schema";
+import { departments, locations, securityShifts, vendors, goodsCategories, checkpoints } from "@/db/schema";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -19,17 +19,19 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MasterDataCreateDialog } from "@/components/master-data/master-data-form-dialog";
+import { CheckpointQrDialog } from "@/components/master-data/checkpoint-qr-dialog";
 
 export default async function MasterDataPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const [deptList, locList, shiftList, vendorList, catList] = await Promise.all([
+  const [deptList, locList, shiftList, vendorList, catList, cpList] = await Promise.all([
     db.select().from(departments),
     db.select().from(locations),
     db.select().from(securityShifts),
     db.select().from(vendors),
     db.select().from(goodsCategories),
+    db.select().from(checkpoints),
   ]);
 
   return (
@@ -48,6 +50,7 @@ export default async function MasterDataPage() {
         <TabsList className="flex flex-wrap h-auto">
           <TabsTrigger value="departments">Departemen ({deptList.length})</TabsTrigger>
           <TabsTrigger value="locations">Lokasi ({locList.length})</TabsTrigger>
+          <TabsTrigger value="checkpoints">Checkpoint ({cpList.length})</TabsTrigger>
           <TabsTrigger value="shifts">Shift ({shiftList.length})</TabsTrigger>
           <TabsTrigger value="vendors">Vendor ({vendorList.length})</TabsTrigger>
           <TabsTrigger value="categories">Kategori Barang ({catList.length})</TabsTrigger>
@@ -107,6 +110,46 @@ export default async function MasterDataPage() {
                   ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="checkpoints">
+          <Card>
+            <CardHeader><CardTitle>Daftar Checkpoint Patroli</CardTitle></CardHeader>
+            <CardContent>
+              {cpList.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Belum ada checkpoint.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Kode</TableHead>
+                      <TableHead>Nama Checkpoint</TableHead>
+                      <TableHead>Lantai</TableHead>
+                      <TableHead>Shift</TableHead>
+                      <TableHead>Urutan</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cpList.map((cp) => (
+                      <TableRow key={cp.code}>
+                        <TableCell className="font-mono text-xs font-bold">{cp.code}</TableCell>
+                        <TableCell>{cp.name}</TableCell>
+                        <TableCell>{cp.floor}</TableCell>
+                        <TableCell>{cp.shift}</TableCell>
+                        <TableCell>{cp.patrolOrder}</TableCell>
+                        <TableCell><Badge variant="secondary">{cp.status}</Badge></TableCell>
+                        <TableCell>
+                          <CheckpointQrDialog checkpoint={cp} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

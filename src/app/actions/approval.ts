@@ -3,6 +3,8 @@
 import { db } from "@/db";
 import { approvalFlows, approvalSteps, approvalRecords, outgoingGoods } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { notifyMultipleUsers } from "./notifications";
+import { getUserIdsByRole } from "@/lib/notify-helpers";
 
 export async function startApprovalWorkflow(requestNumber: string, requester: string, department: string, risk: string) {
   try {
@@ -51,6 +53,16 @@ export async function startApprovalWorkflow(requestNumber: string, requester: st
       .update(outgoingGoods)
       .set({ status: "Dalam Proses Approval" })
       .where(eq(outgoingGoods.number, requestNumber));
+
+    const targetUserIds = await getUserIdsByRole(currentStep.roleName);
+    if (targetUserIds.length > 0) {
+      await notifyMultipleUsers({
+        userIds: targetUserIds,
+        title: `Permintaan Approval: ${requestNumber}`,
+        detail: `Pemohon: ${requester} (${department}). Tipe: ${risk}`,
+        tone: "info",
+      });
+    }
 
     return {
       success: true,
