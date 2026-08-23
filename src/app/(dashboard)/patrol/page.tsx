@@ -21,6 +21,7 @@ import {
 import { ShieldCheck, CheckCircle2, Clock3, AlertTriangle } from "lucide-react";
 import { PatrolFormDialog } from "@/components/patrol/patrol-form-dialog";
 import { GoogleSheetsSyncDialog } from "@/components/google-sheets/google-sheets-sync-dialog";
+import { ExportButton } from "@/components/export-button";
 
 export default async function PatrolPage() {
   const session = await auth();
@@ -80,6 +81,7 @@ export default async function PatrolPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <ExportButton href="/api/export/patrol" label="Export" />
           {syncConfigs.length > 0 && (
             <GoogleSheetsSyncDialog configs={syncConfigs} userName={user.name} />
           )}

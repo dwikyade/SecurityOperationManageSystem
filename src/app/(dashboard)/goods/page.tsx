@@ -21,6 +21,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowDownToLine, ArrowUpFromLine, Package, RotateCcw } from "lucide-react";
 import { GoodsFormDialog } from "@/components/goods/goods-form-dialog";
+import { ExportButton } from "@/components/export-button";
 
 export default async function GoodsPage() {
   const session = await auth();
@@ -76,6 +77,7 @@ export default async function GoodsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <ExportButton href="/api/export/goods" label="Export" />
           <GoodsFormDialog type="incoming" departments={depts} securityUsers={secUsers} />
           <GoodsFormDialog type="outgoing" departments={depts} securityUsers={secUsers} />
         </div>

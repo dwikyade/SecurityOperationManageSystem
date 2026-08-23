@@ -29,6 +29,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { FileSpreadsheet, ShieldCheck, ShieldAlert, Package, QrCode, RefreshCw } from "lucide-react";
+import { ExportButton } from "@/components/export-button";
 
 export default async function ReportsPage() {
   const session = await auth();
@@ -88,11 +89,20 @@ export default async function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black">Laporan</h2>
-        <p className="text-sm text-muted-foreground">
-          Ringkasan statistik operasional security hotel
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-black">Laporan</h2>
+          <p className="text-sm text-muted-foreground">
+            Ringkasan statistik operasional security hotel
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <ExportButton href="/api/export/summary" label="Export Rekap" />
+          <ExportButton href="/api/export/patrol" label="Patroli" />
+          <ExportButton href="/api/export/findings" label="Temuan" />
+          <ExportButton href="/api/export/goods" label="Barang" />
+          <ExportButton href="/api/export/gatepass" label="Gate Pass" />
+        </div>
       </div>
 
       <Tabs defaultValue="summary">

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { QrCode, CheckCircle2, Clock3, XCircle } from "lucide-react";
 import { GatePassActionsDialog } from "@/components/gatepass/gatepass-actions-dialog";
+import { ExportButton } from "@/components/export-button";
 
 const statusVariant = (s: string) => {
   switch (s) {
@@ -74,11 +75,14 @@ export default async function GatePassPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black">Gate Pass</h2>
-        <p className="text-sm text-muted-foreground">
-          Surat jalan keluar-masuk barang
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-black">Gate Pass</h2>
+          <p className="text-sm text-muted-foreground">
+            Surat jalan keluar-masuk barang
+          </p>
+        </div>
+        <ExportButton href="/api/export/gatepass" label="Export" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

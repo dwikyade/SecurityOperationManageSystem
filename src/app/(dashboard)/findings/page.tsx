@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { ShieldAlert, Clock3, CheckCircle2, AlertTriangle } from "lucide-react";
 import { FindingFormDialog } from "@/components/findings/finding-form-dialog";
+import { ExportButton } from "@/components/export-button";
 
 const priorityVariant = (p: string) => {
   switch (p) {
@@ -93,11 +94,14 @@ export default async function FindingsPage() {
             Temuan dari hasil patroli keamanan
           </p>
         </div>
-        <FindingFormDialog
-          departments={depts}
-          locations={locs}
-          reporterName={user.name}
-        />
+        <div className="flex gap-2">
+          <ExportButton href="/api/export/findings" label="Export" />
+          <FindingFormDialog
+            departments={depts}
+            locations={locs}
+            reporterName={user.name}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
