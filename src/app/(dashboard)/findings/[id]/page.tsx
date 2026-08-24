@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { ArrowLeft, ShieldAlert, User, Calendar, MapPin, AlertTriangle } from "lucide-react";
 import { FindingDetailActions } from "@/components/findings/finding-detail-actions";
+import { AttachmentUploadDialog } from "@/components/attachment-upload-dialog";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -75,7 +76,10 @@ export default async function FindingDetailPage({ params }: PageProps) {
             <p className="text-sm text-muted-foreground">{finding.title}</p>
           </div>
         </div>
-        <FindingDetailActions finding={finding} userName={user.name} />
+        <div className="flex gap-2">
+          <AttachmentUploadDialog module="findings" referenceNumber={finding.number} uploader={user.name} />
+          <FindingDetailActions finding={finding} userName={user.name} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

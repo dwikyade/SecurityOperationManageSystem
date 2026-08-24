@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { users, userRoles, roles, activityLogs, departments } from "@/db/schema";
+import { users, userRoles, roles, activityLogs, departments, approvalFlows } from "@/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,12 +21,18 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserCog, ShieldCheck, Activity, Users } from "lucide-react";
 import { AdminCreateDialog } from "@/components/admin/admin-form-dialog";
+import { ApprovalFlowDialog } from "@/components/admin/approval-flow-dialog";
 
 export default async function AdminPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const deptList = await db.select({ code: departments.code, name: departments.name }).from(departments);
+  const user = session.user as { name: string };
+
+  const [deptList, flowList] = await Promise.all([
+    db.select({ code: departments.code, name: departments.name }).from(departments),
+    db.select().from(approvalFlows),
+  ]);
 
   const userList = await db
     .select({
@@ -76,7 +82,10 @@ export default async function AdminPage() {
             Pengelolaan akun pengguna, peran, dan log aktivitas sistem
           </p>
         </div>
-        <AdminCreateDialog roles={roleList} departments={deptList} />
+        <div className="flex gap-2">
+          <ApprovalFlowDialog roles={roleList} userName={user.name} />
+          <AdminCreateDialog roles={roleList} departments={deptList} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -101,8 +110,9 @@ export default async function AdminPage() {
       <Tabs defaultValue="users">
         <TabsList>
           <TabsTrigger value="users">Pengguna ({totalUsers})</TabsTrigger>
-          <TabsTrigger value="roles">Role / Peran ({roleList.length})</TabsTrigger>
-          <TabsTrigger value="logs">Log Aktivitas ({logs.length})</TabsTrigger>
+          <TabsTrigger value="roles">Role ({roleList.length})</TabsTrigger>
+          <TabsTrigger value="flows">Approval Flows ({flowList.length})</TabsTrigger>
+          <TabsTrigger value="logs">Log ({logs.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
@@ -159,6 +169,38 @@ export default async function AdminPage() {
                   ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="flows">
+          <Card>
+            <CardHeader><CardTitle>Approval Flows</CardTitle></CardHeader>
+            <CardContent>
+              {flowList.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Belum ada approval flow. Klik tombol &ldquo;Buat Approval Flow&rdquo; untuk membuat.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Nama Flow</TableHead>
+                      <TableHead>Tipe Transaksi</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {flowList.map((f) => (
+                      <TableRow key={f.id}>
+                        <TableCell className="font-mono text-xs">{f.id}</TableCell>
+                        <TableCell className="font-bold">{f.name}</TableCell>
+                        <TableCell>{f.transactionType}</TableCell>
+                        <TableCell><Badge variant="secondary">{f.status}</Badge></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

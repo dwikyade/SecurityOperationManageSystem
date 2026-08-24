@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { incomingGoods, outgoingGoods, departments, users, roles, userRoles } from "@/db/schema";
+import { incomingGoods, outgoingGoods, departments, users, roles, userRoles, gatePasses, personalItems, goodsReturns } from "@/db/schema";
 import { desc, sql, eq } from "drizzle-orm";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,15 +19,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowDownToLine, ArrowUpFromLine, Package, RotateCcw } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Package, RotateCcw, UserCheck } from "lucide-react";
 import { GoodsFormDialog } from "@/components/goods/goods-form-dialog";
+import { GoodsReturnDialog } from "@/components/goods/goods-return-dialog";
+import { PersonalItemDialog } from "@/components/goods/personal-item-dialog";
 import { ExportButton } from "@/components/export-button";
 
 export default async function GoodsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const [depts, secUsers] = await Promise.all([
+  const user = session.user as { name: string };
+
+  const [depts, secUsers, activeGatePasses, personalItemList, returnList] = await Promise.all([
     db.select().from(departments),
     db
       .select({ id: users.id, name: users.name })
@@ -35,6 +39,12 @@ export default async function GoodsPage() {
       .innerJoin(userRoles, eq(users.id, userRoles.userId))
       .innerJoin(roles, eq(userRoles.roleId, roles.id))
       .where(sql`${roles.name} LIKE '%Security%'`),
+    db
+      .select({ number: gatePasses.number, bearer: gatePasses.bearer, department: gatePasses.department })
+      .from(gatePasses)
+      .where(sql`${gatePasses.status} IN ('Aktif', 'Digunakan')`),
+    db.select().from(personalItems).orderBy(desc(personalItems.createdAt)).limit(50),
+    db.select().from(goodsReturns).orderBy(desc(goodsReturns.createdAt)).limit(50),
   ]);
 
   const incoming = await db
@@ -76,8 +86,10 @@ export default async function GoodsPage() {
             Pencatatan barang masuk dan keluar hotel
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <ExportButton href="/api/export/goods" label="Export" />
+          <GoodsReturnDialog gatePasses={activeGatePasses} securityUsers={secUsers} userName={user.name} />
+          <PersonalItemDialog departments={depts} securityUsers={secUsers} userName={user.name} />
           <GoodsFormDialog type="incoming" departments={depts} securityUsers={secUsers} />
           <GoodsFormDialog type="outgoing" departments={depts} securityUsers={secUsers} />
         </div>
@@ -106,6 +118,8 @@ export default async function GoodsPage() {
         <TabsList>
           <TabsTrigger value="incoming">Barang Masuk</TabsTrigger>
           <TabsTrigger value="outgoing">Barang Keluar</TabsTrigger>
+          <TabsTrigger value="returns">Pengembalian ({returnList.length})</TabsTrigger>
+          <TabsTrigger value="personal">Barang Pribadi ({personalItemList.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="incoming">
@@ -188,6 +202,94 @@ export default async function GoodsPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">{r.status}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="returns">
+          <Card>
+            <CardHeader>
+              <CardTitle>Daftar Pengembalian Barang</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {returnList.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Belum ada data pengembalian.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nomor</TableHead>
+                      <TableHead>No Gate Pass</TableHead>
+                      <TableHead>Tanggal Kembali</TableHead>
+                      <TableHead>Pembawa</TableHead>
+                      <TableHead>Ringkasan</TableHead>
+                      <TableHead>Kondisi</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {returnList.map((r) => (
+                      <TableRow key={r.number}>
+                        <TableCell className="font-mono text-xs font-bold">{r.number}</TableCell>
+                        <TableCell className="font-mono text-xs">{r.gatePassNumber}</TableCell>
+                        <TableCell>{r.returnedAt}</TableCell>
+                        <TableCell>{r.carrierName}</TableCell>
+                        <TableCell className="max-w-48 truncate">{r.returnedSummary}</TableCell>
+                        <TableCell>{r.returnCondition}</TableCell>
+                        <TableCell>
+                          <Badge variant="default">{r.status}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="personal">
+          <Card>
+            <CardHeader>
+              <CardTitle>Daftar Barang Pribadi</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {personalItemList.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Belum ada data barang pribadi.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nomor</TableHead>
+                      <TableHead>Pemilik</TableHead>
+                      <TableHead>Identitas</TableHead>
+                      <TableHead>Departemen</TableHead>
+                      <TableHead>Nama Barang</TableHead>
+                      <TableHead>Merek/Model</TableHead>
+                      <TableHead>Serial Number</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {personalItemList.map((r) => (
+                      <TableRow key={r.number}>
+                        <TableCell className="font-mono text-xs font-bold">{r.number}</TableCell>
+                        <TableCell>{r.ownerName}</TableCell>
+                        <TableCell>{r.ownerIdentity || "-"}</TableCell>
+                        <TableCell>{r.department}</TableCell>
+                        <TableCell>{r.itemName}</TableCell>
+                        <TableCell>{r.brand} {r.model}</TableCell>
+                        <TableCell className="font-mono text-xs">{r.serialNumber || "-"}</TableCell>
+                        <TableCell>
+                          <Badge variant={r.status === "Di Dalam Hotel" ? "default" : "secondary"}>
+                            {r.status}
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     ))}

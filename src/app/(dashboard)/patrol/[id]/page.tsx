@@ -15,6 +15,9 @@ import {
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck, User, Calendar, Clock, MapPin, AlertTriangle } from "lucide-react";
 import { PatrolDetailActions } from "@/components/patrol/patrol-detail-actions";
+import { AttachmentUploadDialog } from "@/components/attachment-upload-dialog";
+import { db as dbInstance } from "@/db";
+import { attachments } from "@/db/schema";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -38,6 +41,11 @@ export default async function PatrolDetailPage({ params }: PageProps) {
 
   const user = session.user as { name: string; roles: string[] };
 
+  const fileList = await dbInstance
+    .select()
+    .from(attachments)
+    .where(eq(attachments.referenceNumber, decodedNumber));
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
@@ -52,7 +60,10 @@ export default async function PatrolDetailPage({ params }: PageProps) {
             <p className="text-sm text-muted-foreground">Detail Catatan Patroli</p>
           </div>
         </div>
-        <PatrolDetailActions record={record} userName={user.name} />
+        <div className="flex gap-2">
+          <AttachmentUploadDialog module="patrol" referenceNumber={record.number} uploader={user.name} />
+          <PatrolDetailActions record={record} userName={user.name} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
